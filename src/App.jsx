@@ -1,38 +1,59 @@
 // src/App.jsx
 import { useState, useEffect } from 'react'
-import StarshipSearch from './components/StartshipSearch';
-import StartshipList from './components/StartshipSearch';
+import StarshipSearch from './components/StarshipSearch/StarshipSearch';
+import StarshipList from './components/StarshipSearch/StarshipList';
 import  { getAllStarships } from './services/starshipService';
 import './App.css'
 
 const App = () => {
+  const [starships, setStarships] = useState([]);
   const [starshipsData, setStarshipsData] = useState([]);
   const [displayedStarships, setDisplayedStarships] = useState ([]);
+  const [lastSearchTerm, setLastSearchTerm] = useState('');
 
   useEffect(() => {
-      getAllStarships();    
-  },[]);
+    async function fetchStarships() {
+      try {
+        const data = await getAllStarships();
+        setStarships(data);
+        setStarshipsData(data);
+        setDisplayedStarships(data);
+      } catch (error) {
+        console.error ('Error in App:', error.message)
+      }
+    }
 
-  async function postData() {
-	  const url = "https://api.airtable.com/v0/appodGKgM3CqEfx4u/Table%201?maxRecords=3";
-	  try {
-	      const response = await fetch(url);
-        // headers: {
-        //   Authorization: "Bearer" + import.meta.env.VITE_Airtable_TOKEN
-        // } 
+  fetchStarships()
+  },[])
 
-        if (!response.ok) {
-	      throw new Error(`Response status: ${response.status}`);
-	    }
+  const handleSubmit = (searchTerm) => {
+    setLastSearchTerm(searchTerm);
 
-	    const result = await response.json();
-	    return result;
-        
-	  } catch (error) {
-	    console.error(error);
-      throw new Error('Failed to fetch starships.');
-	  }
-	}
-};
+    if (!searchTerm.trim()) {
+      setDisplayedStarships(starshipsData)
+    } else {
+      const filtered = starshipsData.filter(ship => 
+        ship.name.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+      setDisplayedStarships(filtered)
+    }
+  };
 
-export default App
+
+  return (
+    <div className='App'>
+      <h1>Star Wars API</h1>
+      <h2>Search</h2>
+      <StarshipSearch 
+        onSearch={handleSubmit}
+        lastSearch={lastSearchTerm}
+      />
+
+      <h2>Starships</h2>
+      <p>Number of results: {displayedStarships.length}</p>
+      <StarshipList starships={displayedStarships} />
+    </div>
+  )
+}
+
+  export default App;
