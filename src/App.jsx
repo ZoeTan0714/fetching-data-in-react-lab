@@ -9,7 +9,8 @@ const App = () => {
   const [starships, setStarships] = useState([]);
   const [starshipsData, setStarshipsData] = useState([]);
   const [displayedStarships, setDisplayedStarships] = useState ([]);
-  const [lastSearchTerm, setLastSearchTerm] = useState('');
+  const [lastSearchTerm, setLastSearchTerm] = useState('')
+  const [searchHistory, setSearchHistory] = useState([]);
 
   useEffect(() => {
     async function fetchStarships() {
@@ -29,6 +30,13 @@ const App = () => {
   const handleSubmit = (searchTerm) => {
     setLastSearchTerm(searchTerm);
 
+     if (searchTerm.trim()) {
+      setSearchHistory(prev => {
+        const filtered = prev.filter(term => term !== searchTerm);
+        return [searchTerm, ...filtered].slice(0, 3);
+      });
+    }
+    
     if (!searchTerm.trim()) {
       setDisplayedStarships(starshipsData)
     } else {
@@ -39,6 +47,13 @@ const App = () => {
     }
   };
 
+    const handleReset = () => {
+    setDisplayedStarships(starshipsData); 
+    setLastSearchTerm('');                  
+    setSearchHistory([]);                  
+  };
+
+  const hasSearchFilter = searchHistory.length > 0 || displayedStarships.length < starshipsData.length;
 
   return (
     <div className='App'>
@@ -46,7 +61,10 @@ const App = () => {
       <h2>Search</h2>
       <StarshipSearch 
         onSearch={handleSubmit}
+        onReset={handleReset}
         lastSearch={lastSearchTerm}
+        searchHistory={searchHistory}
+        hasSearchFilter={hasSearchFilter}
       />
 
       <h2>Starships</h2>
